@@ -1,25 +1,69 @@
-**Project Overview**
+# 📊 Zipf's Law Analysis on Song Lyrics Dataset
 
-- **Repository**: `zipfs-law-implementation`
+🔎 **Project Overview**
 
-- **Purpose**: This repository contains a dataset of Rihanna song lyrics (`Rihanna.csv`). The purpose of this project is to explore Zipf's Law on the lyrics — i.e., to show that word frequency vs rank follows an approximate power-law distribution (a straight line on a log-log plot).
+This project validates Zipf's Law on a corpus of song lyrics (Rihanna). Zipf's Law predicts that word frequency is roughly inversely proportional to its rank in a frequency table. This repository contains the lyrics CSV and starter code & instructions to reproduce a rank-frequency (log-log) plot and estimate the Zipf exponent.
 
-**Dataset**
-- **File**: `Rihanna.csv`
-- **Columns**: index (auto), `Artist`, `Title`, `Album`, `Year`, `Date`, `Lyric`.
-- **Notes**: The `Lyric` column includes raw song text (lowercase and punctuation present). This README assumes the CSV is UTF-8 and comma-separated.
+🧠 **Objective**
 
-**Zipf's Law (short)**
-- Zipf's Law states that in many natural language corpora the frequency f of a word is approximately inversely proportional to its rank r: f(r) ~ C / r^s, where s is close to 1 for many languages. On a log-log plot of rank vs frequency this appears as an approximately straight line.
+- **Analyze** the word frequency distribution in the lyrics corpus.
+- **Plot** a log-log rank vs frequency (Zipf) plot.
+- **Estimate** a power-law exponent and comment on deviations.
+- **Provide** reproducible steps and next-step ideas (stopword filtering, per-song analysis, robust power-law fitting).
 
-**Suggested analysis steps**
-- 1) Tokenize all lyrics and normalize (lowercase, remove punctuation).
-- 2) Count word frequencies across the corpus.
-- 3) Sort words by frequency (rank) and plot frequency vs rank on a log-log scale.
-- 4) Optionally fit a power-law (linear fit in log-log space) and report the slope (exponent s).
+📁 **Dataset Description**
 
-**Minimal Python recipe**
-Save this as `analyze_zipf.py` and run in the repository root.
+The dataset is provided in `Rihanna.csv` and includes the following columns:
+
+- `Artist` – Name of the artist
+- `Title` – Song title
+- `Lyric` – Full song lyrics
+- `Album` – Album name
+- `Year` – Year of release
+- `Date` – Date of release
+
+Notes: the `Lyric` column contains raw text (repeats, punctuation, and inconsistent casing are present). Preprocessing is recommended before analysis.
+
+📝 **Methodology**
+
+1. Data Preprocessing
+	- Remove punctuation and special characters
+	- Convert all text to lowercase
+	- Tokenize lyrics into words
+
+2. Word Frequency Count
+	- Count occurrences of each token across the whole corpus (or per-song if desired)
+
+3. Rank-Frequency Distribution
+	- Sort words by frequency and compute rank
+	- Plot `rank` vs `frequency` on a log-log scale
+
+4. Estimating a Power-Law
+	- Fit a simple linear model to log(rank) vs log(frequency) for a quick exponent estimate
+	- Optionally use a specialized library (e.g., `powerlaw`) for more robust parameter estimation and goodness-of-fit tests
+
+5. Visualizations
+	- Log-log Zipf plot (rank vs frequency)
+	- Bar chart of most common words
+	- Optional: per-song Zipf plots or album/year comparisons
+
+📊 **Visualizations (expected)**
+
+- ✅ Zipf's Law Log-Log Plot
+- 📈 Bar chart of top N word frequencies
+
+📌 **Key Insights (what to expect)**
+
+- The top-ranked words will dominate counts — common words and refrains (e.g., "love", "yeah", "baby") are frequent.
+- A long-tail appears as rank increases: most words occur once or a few times.
+- If the plot is approximately linear in log-log space, the corpus follows Zipf-like behavior. The estimated exponent `s` is often near 1 but may differ due to dataset size and lyric repetition.
+- Deviations in tails can reflect stylistic or genre-specific language usage (lyrics include repeated choruses which emphasize some tokens).
+
+-----------------------------------------
+
+## Quick reproducible recipe (`analyze_zipf.py`)
+
+Save the following as `analyze_zipf.py` at the repository root and run it.
 
 ```python
 import re
@@ -28,45 +72,31 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Load the CSV
 df = pd.read_csv('Rihanna.csv')
-
-# Join all lyrics
 text = ' '.join(df['Lyric'].dropna().astype(str).tolist())
-
-# Basic tokenization and normalization
 tokens = re.findall(r"\w+", text.lower())
-
-# Frequency counts
 freq = Counter(tokens)
-
-# Build rank-frequency list
 freq_items = sorted(freq.items(), key=lambda x: x[1], reverse=True)
 ranks = np.arange(1, len(freq_items)+1)
 frequencies = np.array([f for _, f in freq_items])
 
-# Log-log plot
 plt.figure(figsize=(8,5))
 plt.loglog(ranks, frequencies, marker='.', linestyle='none')
 plt.xlabel('Rank')
 plt.ylabel('Frequency')
 plt.title("Zipf plot — Rihanna lyrics")
 plt.grid(True, which='both', ls='--', lw=0.5)
-plt.savefig('zipf_rhianna.png', dpi=150)
+plt.savefig('zipf_rihanna.png', dpi=150)
 plt.show()
 
-# Simple linear fit in log-log space (estimate exponent)
+# Quick exponent estimate
 mask = frequencies > 0
-log_r = np.log(ranks[mask])
-log_f = np.log(frequencies[mask])
-coef = np.polyfit(log_r, log_f, 1)
+coef = np.polyfit(np.log(ranks[mask]), np.log(frequencies[mask]), 1)
 exponent = -coef[0]
 print(f"Estimated Zipf exponent (s) ≈ {exponent:.3f}")
-
 ```
 
-**Commands to run (macOS / zsh)**
-- Create venv and install dependencies:
+## Run instructions (macOS / zsh)
 
 ```bash
 cd /Users/nitinsahu/Desktop/zipfs-law-implementation
@@ -77,17 +107,12 @@ pip install pandas matplotlib numpy
 python analyze_zipf.py
 ```
 
-**Interpretation**
-- If Zipf's law holds roughly, the log-log plot will look approximately linear and the estimated exponent `s` will be near 1 (commonly between 0.8 and 1.2 for many corpora). Deviations can indicate dataset size, preprocessing choices (stopwords, stemming), or domain-specific word use (song lyrics often repeat choruses and refrains, which affects counts).
+## Next steps (I can do these for you)
 
-**Next steps / ideas**
-- Remove common stopwords (e.g., using NLTK or a custom list) and re-run the analysis to compare.
-- Analyze per-song Zipf distributions and compare exponents across albums/years.
-- Fit a proper power-law using the `powerlaw` Python package for more robust estimates.
-
-**Acknowledgements & License**
-- This repository is a lightweight analysis starter. Check the licensing of the lyrics source before publishing derived datasets or visualizations publicly.
+- Add `analyze_zipf.py` to the repo and run it to produce `zipf_rihanna.png` and the exponent estimate.
+- Add stopword removal or per-song analyses and include resulting plots.
+- Fit a robust power-law with the `powerlaw` package and include a short results section.
 
 ---
 
-If you want, I can: create the `analyze_zipf.py` script in this repo, run the analysis and produce the plot, and then commit & push the changes to `main`.
+If you'd like, I will now add `analyze_zipf.py`, run the analysis, save the plot, and push the results to `main`.
